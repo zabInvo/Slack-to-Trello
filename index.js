@@ -19,6 +19,17 @@ const interactivity = require("./slack").interactivityTest;
 
 const server = https.createServer({ key, cert }, app);
 
+// Slack live-events setup!.
+const slackSigningSecret = process.env.SLACK_SIGNING_SECRET;
+const { createEventAdapter } = require('@slack/events-api');
+const slackEvents = createEventAdapter(slackSigningSecret);
+app.use("/slack/events", slackEvents.requestListener());
+
+slackEvents.on('message', (event) => {
+  console.log(event);
+});
+
+
 app.use(bodyParser.urlencoded({
     extended: true
 }));

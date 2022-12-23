@@ -17,6 +17,7 @@
   },
   "homepage": "https://github.com/zabInvo/Slack-to-Trello#readme",
   "dependencies": {
+    "@slack/events-api": "^3.0.1",
     "@slack/web-api": "^6.7.2",
     "axios": "^0.27.2",
     "body-parser": "^1.20.0",
