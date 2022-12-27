@@ -9,6 +9,18 @@ const port = process.env.PORT || 8080;
 const trelloApiKey = process.env.TRELLO_KEY;
 const trelloToken = process.env.TRELLO_TOKEN;
 
+// Slack live-events setup!.
+const slackSigningSecret = process.env.SLACK_SIGNING_SECRET;
+const { createEventAdapter } = require('@slack/events-api');
+const slackEvents = createEventAdapter(slackSigningSecret);
+app.use("/slack/events", slackEvents.requestListener());
+
+slackEvents.on('message', (event) => {
+  console.log(event);
+});
+
+const listId = 'List-Id' // e.g. '63a2dcc1ba3b6805237ed321'
+
 const { createCard, createReply } = require('./trelloApi');
 createCard({
     heading: 'Assalam o alaikum from node side!',
