@@ -19,13 +19,13 @@ slackEvents.on('message', (event) => {
   console.log(event);
 });
 
-const listId = 'List-Id' // e.g. '63a2dcc1ba3b6805237ed321'
+let listId = 'List-Id' // e.g. '63a2dcc1ba3b6805237ed321'
 
 const { createCard, createReply } = require('./trelloApi');
 createCard({
     heading: 'Assalam o alaikum from node side!',
     description: "This is a test card!!",
-}, '63a2dcc1ba3b6805237ed321');
+}, listId);
 
 // For Locally use of https cert instead of http
 const fs = require("fs");
