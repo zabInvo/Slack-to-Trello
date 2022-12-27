@@ -9,6 +9,12 @@ const port = process.env.PORT || 8080;
 const trelloApiKey = process.env.TRELLO_KEY;
 const trelloToken = process.env.TRELLO_TOKEN;
 
+const { createCard, createReply } = require('./trelloApi');
+createCard({
+    heading: 'Assalam o alaikum from node side!',
+    description: "This is a test card!!",
+}, '63a2dcc1ba3b6805237ed321');
+
 // For Locally use of https cert instead of http
 const fs = require("fs");
 const https = require("https");
