@@ -1,102 +1,88 @@
 require("dotenv").config();
 
 const { WebClient } = require("@slack/web-api");
+const e = require("express");
 const slackToken = process.env.SLACK_BOT_TOKEN;
 
 const web = new WebClient(slackToken);
 
-const interactivityTest = async (req, res) => {
-    try {
-        console.log("This is request form", req.body);
-        let card = new Array();
+const createTrelloCard = require("./trelloApi").createTrelloCard;
+const replyOnTrelloCard = require("./trelloApi").replyOnTrelloCard;
 
-        if(resolvePipe(req.body.text) === -1){
-            res.status(200).json({
-                "text": "Error: Invalid format!",
-            })
-        } 
-        else if(resolvePipe(req.body.text) === -2){
-            res.status(200).json({
-                "text": "Error: Empty Fields are not allowed!",
-            })
-        } 
-        else {
-            card = resolvePipe(req.body.text);
-            res.status(200).json({
-                "text": "Card Created Sucessfully",
-            });
+const mappingModel = require('./models').Mapping;
+const slackToTrelloModel = require('./models').SlackToTrello;
 
-            const result = await web.chat.postMessage({
-                channel: req.body.channel_id,
-                text: 'Hello World New',
-                "blocks": [
-                    {
-                        "type": "section",
-                        "text": {
-                            "type": "mrkdwn",
-                            "text": "*Trello Card Created:*"
-                        }
-                    },
-                    {
-                        "type": "section",
-                        "block_id": "section789",
-                        "fields": [
-                            {
-                                "type": "mrkdwn",
-                                "text": "*Card Tile* : " + card[0],
-                            }
-                        ]
-                    },
-                    {
-                        "type": "section",
-                        "block_id": "section788",
-                        "fields": [
-                            {
-                                "type": "mrkdwn",
-                                "text": "*Description* : " + card[1],
-                            }
-                        ]
-                    },
-                    {
-                        "type": "section",
-                        "block_id": "section778",
-                        "fields": [
-                            {
-                                "type": "mrkdwn",
-                                "text": `*Created by* : ${req.body.user_name}`,
-                            }
-                        ]
-                    }
-                ]
-            });
-    
-            const reply = await web.chat.postMessage({
-                channel: req.body.channel_id,
-                thread_ts: result.message.ts,
-                text: "Hello again :wave:"
-            });
+const slackMessageEv = async (ev) => {
+    if ((ev.type === 'message' && !ev.subtype) || (ev.type === 'message' && ev.subtype === "file_share")) {
+        if (ev.thread_ts) {
+            await replyOnTrelloCard(ev);
         }
-
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ messages: "Internal Server Error", error: error });
+        else {
+            await createTrelloCard(ev);
+        }
     }
 };
 
-function resolvePipe(toConvert) {
-    if(toConvert.split("|").length === 4){
-        const [name, desc, board, list] = toConvert.split("|");
-        if(name.length == 0 || desc.length == 0 || board.length == 0 || list.length == 0) {
-            return -1 // 'Empty fields not allowed'
+const updateActivityOnSlack = async (event, type) => {
+    console.log("updateActivityOnSlack", event);
+    try {
+        if (type === 'commentCard') {
+            const isMapped = await slackToTrelloModel.findOne({
+                where: {
+                    boardId: event.data.board.id
+                },
+            });
+            if (isMapped) {
+                console.log('isMapped',isMapped);
+                const channelId = isMapped.channelId;
+                console.log("This is channel id" , channelId);
+                const cardMapping = await mappingModel.findOne({
+                    where: {
+                        cardId: event.data.card.id
+                    },
+                });
+                if (cardMapping) {
+                    const slackPostId = cardMapping.postId;
+                    console.log("channelId",channelId);
+                    console.log("slackPostId",slackPostId);
+
+                    const postComment = await web.chat.postMessage({
+                        channel: channelId,
+                        thread_ts: slackPostId,
+                        text: "Comment Posted:",
+                        'blocks': [
+                            {
+                                "type": "section",
+                                "text": {
+                                    "type": "mrkdwn",
+                                    "text": `*${event.memberCreator.fullName}*\n ${event.data.text}`
+                                }
+                            },
+                        ]
+                    });
+                    console.log("postComment",postComment);
+                } else {
+                    console.log("Error: Post is not mapped with any card");
+                }
+            } else {
+                console.log("Error: Channel is not mapped with any board");
+            }
+        } else if (type === 'updateCard') {
+
+        } else if (type === 'addMemberToCard') {
+
+        } else if (type === 'removeMemberFromCard') {
+
+        } else if (type === 'deleteCard') {
+
         }
-        else {
-            return [name, desc, board, list]
-        };
-    }
-    else {
-        return -2 // 'Invalid Format'
+    } catch (error) {
+        console.log("Error While updateActivityOnSlack : ", error)
     }
 }
+
+
 module.exports = {
-    interactivityTest
+    slackMessageEv,
+    updateActivityOnSlack
 };

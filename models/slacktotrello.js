@@ -15,8 +15,10 @@ module.exports = (sequelize, DataTypes) => {
   }
   SlackToTrello.init({
     channelId: DataTypes.STRING,
-    BoardId: DataTypes.STRING,
-    organizationId: DataTypes.STRING
+    boardId: DataTypes.STRING,
+    organizationId: DataTypes.STRING,
+    channelName: DataTypes.STRING,
+    boardName : DataTypes.STRING,
   }, {
     sequelize,
     modelName: 'SlackToTrello',

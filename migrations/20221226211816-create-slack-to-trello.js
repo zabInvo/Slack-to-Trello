@@ -12,7 +12,13 @@ module.exports = {
       channelId: {
         type: Sequelize.STRING
       },
-      BoardId: {
+      channelName: {
+        type: Sequelize.STRING
+      },
+      boardId: {
+        type: Sequelize.STRING
+      },
+      boardName: {
         type: Sequelize.STRING
       },
       organizationId: {
